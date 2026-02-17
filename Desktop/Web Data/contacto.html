@@ -191,38 +191,65 @@
         // Cargar clave desde endpoint PHP
         (function() {
             const widget = document.getElementById('turnstile-widget');
-            if (!widget) return;
+            if (!widget) {
+                console.error('Turnstile: Widget no encontrado');
+                return;
+            }
             
-            // Función para renderizar Turnstile
-            function renderTurnstile(siteKey) {
+            // Función para configurar y renderizar Turnstile
+            function setupTurnstile(siteKey) {
                 if (!siteKey || siteKey === '') {
                     console.error('Turnstile: Site key vacía');
                     widget.innerHTML = '<p style="color: red; padding: 10px; background: #fee; border-radius: 4px;">⚠️ Error: Turnstile no configurado. Verifica que el archivo .env tenga TURNSTILE_SITE_KEY</p>';
                     return;
                 }
                 
-                widget.setAttribute('data-sitekey', siteKey);
-                
-                // Esperar a que Turnstile esté cargado
-                function tryRender() {
-                    if (typeof turnstile !== 'undefined') {
+                // Esperar a que Turnstile esté completamente cargado
+                function waitForTurnstile() {
+                    if (typeof turnstile !== 'undefined' && typeof turnstile.render === 'function') {
+                        // Limpiar el widget antes de renderizar
+                        widget.innerHTML = '';
+                        widget.setAttribute('data-sitekey', siteKey);
+                        
                         try {
-                            turnstile.render(widget, {
+                            // Renderizar Turnstile
+                            const widgetId = turnstile.render(widget, {
                                 sitekey: siteKey,
-                                callback: onTurnstileSuccess
+                                callback: onTurnstileSuccess,
+                                'error-callback': function() {
+                                    console.error('Turnstile: Error en el widget');
+                                }
                             });
-                            console.log('✅ Turnstile renderizado correctamente');
+                            console.log('✅ Turnstile renderizado correctamente con ID:', widgetId);
                         } catch (e) {
                             console.error('Error al renderizar Turnstile:', e);
-                            widget.innerHTML = '<p style="color: red;">Error al renderizar Turnstile. Verifica la consola.</p>';
+                            console.error('Detalles del error:', e.message, e.stack);
+                            widget.innerHTML = '<p style="color: red; padding: 10px; background: #fee; border-radius: 4px;">⚠️ Error al renderizar Turnstile: ' + e.message + '</p>';
                         }
                     } else {
-                        // Reintentar después de 100ms
-                        setTimeout(tryRender, 100);
+                        // Reintentar después de 100ms (máximo 5 segundos)
+                        const startTime = Date.now();
+                        const maxWait = 5000;
+                        
+                        function retry() {
+                            if (Date.now() - startTime > maxWait) {
+                                console.error('Turnstile: Timeout esperando la carga del script');
+                                widget.innerHTML = '<p style="color: red; padding: 10px; background: #fee; border-radius: 4px;">⚠️ Error: El script de Turnstile no se cargó. Verifica tu conexión a internet.</p>';
+                                return;
+                            }
+                            
+                            if (typeof turnstile !== 'undefined' && typeof turnstile.render === 'function') {
+                                setupTurnstile(siteKey);
+                            } else {
+                                setTimeout(retry, 100);
+                            }
+                        }
+                        
+                        setTimeout(retry, 100);
                     }
                 }
                 
-                tryRender();
+                waitForTurnstile();
             }
             
             // Intentar cargar desde el endpoint
@@ -235,7 +262,8 @@
                 })
                 .then(data => {
                     if (data.siteKey && data.siteKey !== '') {
-                        renderTurnstile(data.siteKey);
+                        console.log('✅ Site key cargada:', data.siteKey.substring(0, 20) + '...');
+                        setupTurnstile(data.siteKey);
                     } else if (data.error) {
                         console.error('Turnstile error:', data.error);
                         widget.innerHTML = '<p style="color: red; padding: 10px; background: #fee; border-radius: 4px;">⚠️ ' + data.error + '</p>';
