@@ -185,6 +185,19 @@
         </svg>
     </a>
 
+    <!-- Definir callback de Turnstile ANTES de renderizar -->
+    <script>
+        // Callback cuando Turnstile se completa exitosamente
+        // Debe estar definido antes de renderizar Turnstile
+        window.onTurnstileSuccess = function(token) {
+            console.log('✅ Turnstile token generado:', token.substring(0, 20) + '...');
+            const hiddenInput = document.getElementById('cf-turnstile-response');
+            if (hiddenInput) {
+                hiddenInput.value = token;
+            }
+        };
+    </script>
+    
     <script src="/script.js" defer></script>
     <!-- Cargar clave de Turnstile desde configuración -->
     <script>
