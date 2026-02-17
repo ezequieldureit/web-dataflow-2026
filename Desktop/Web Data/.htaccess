@@ -1,0 +1,58 @@
+# IMPORTANTE: Este archivo debe estar en la raíz del sitio (public_html o www)
+
+# Enable Rewrite Engine
+RewriteEngine On
+
+# Ensure proper MIME types
+AddType text/css .css
+AddType application/javascript .js
+AddType image/png .png
+AddType image/jpeg .jpg .jpeg
+AddType image/svg+xml .svg
+
+# Enable CORS for fonts and assets (if needed)
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$">
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+</IfModule>
+
+# Allow direct access to static files (CSS, JS, images, fonts, etc.)
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteCond %{REQUEST_URI} \.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot|pdf)$ [NC]
+RewriteRule ^ - [L]
+
+# Allow direct access to .html files (no redirect if accessed directly)
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteCond %{REQUEST_URI} \.html$ [NC]
+RewriteRule ^ - [L]
+
+# Redirect .html to non-.html version (clean URLs)
+RewriteCond %{THE_REQUEST} \s/+(.+?)\.html[\s?] [NC]
+RewriteRule ^ /%1? [R=301,L]
+
+# Internal rewrite: serve .html files when accessed without extension
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !\.html$ [NC]
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.+)$ $1.html [L]
+
+# Handle root/index page
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} ^/?$
+RewriteRule ^$ index.html [L]
+
+# Default to index if no file is specified
+DirectoryIndex index.html
+
+# Prevent directory listing
+Options -Indexes
+
+# Security: Prevent access to .htaccess file
+<Files .htaccess>
+    Order allow,deny
+    Deny from all
+</Files>
+

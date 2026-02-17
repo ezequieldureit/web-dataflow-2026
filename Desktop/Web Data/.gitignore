@@ -1,0 +1,12 @@
+# Archivo de configuración con credenciales
+.env
+.env.local
+.env.production
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Archivos temporales
+*.log
+*.tmp
