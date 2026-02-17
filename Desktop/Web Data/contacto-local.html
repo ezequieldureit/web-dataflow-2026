@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Contacto - Dataflow Services (Modo Prueba Local)">
+    <title>Contacto - Dataflow Services (Prueba Local)</title>
+    <base href="/">
+    <link rel="stylesheet" href="styles.css?v=2.4">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Cloudflare Turnstile -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-wrapper">
+                <a href="/" class="logo">
+                    <img src="/images/logo.png" alt="Dataflow Services" class="logo-img">
+                </a>
+                <ul class="nav-menu">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/contacto" class="active">Contacto</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Hero -->
+    <section class="page-hero">
+        <div class="page-hero-background">
+            <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1920&q=80" alt="Contact background" class="page-hero-bg-image">
+            <div class="page-hero-overlay"></div>
+        </div>
+        <div class="container">
+            <div class="page-hero-content">
+                <h1 class="page-hero-title">Contactanos (Modo Prueba Local)</h1>
+                <p class="page-hero-subtitle">Formulario de prueba - Los emails se guardan en test-email-log.txt</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact-section">
+        <div class="container">
+            <div class="contact-wrapper">
+                <div class="contact-form-wrapper">
+                    <form class="contact-form" id="contactForm" action="test-email-local.php" method="POST">
+                        <div class="form-group">
+                            <label for="name">Nombre completo *</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email *</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Teléfono</label>
+                            <input type="tel" id="phone" name="phone">
+                        </div>
+                        <div class="form-group">
+                            <label for="service">Tipo de servicio *</label>
+                            <select id="service" name="service" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="digital">Servicios Digitales</option>
+                                <option value="eventos">Conectividad & Eventos</option>
+                                <option value="ambos">Ambos</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Mensaje *</label>
+                            <textarea id="message" name="message" rows="5" required placeholder="Contanos sobre tu proyecto..."></textarea>
+                        </div>
+                        <!-- Cloudflare Turnstile -->
+                        <div class="cf-turnstile" id="turnstile-widget" data-sitekey="" data-callback="onTurnstileSuccess"></div>
+                        <input type="hidden" name="cf-turnstile-response" id="cf-turnstile-response">
+                        <button type="submit" class="btn btn-primary btn-block">Enviar mensaje (Prueba Local)</button>
+                        <p class="form-note">* Campos obligatorios - Modo prueba: los emails se guardan en test-email-log.txt</p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="/script.js" defer></script>
+    <!-- Cargar clave de Turnstile desde configuración -->
+    <script>
+        // Cargar clave desde endpoint PHP
+        (function() {
+            const widget = document.getElementById('turnstile-widget');
+            if (!widget) return;
+            
+            fetch('get-turnstile-config.php')
+                .then(response => {
+                    if (!response.ok) throw new Error('Error al cargar configuración');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.siteKey && data.siteKey !== '') {
+                        widget.setAttribute('data-sitekey', data.siteKey);
+                        // Si Turnstile ya está cargado, renderizar el widget
+                        if (typeof turnstile !== 'undefined') {
+                            turnstile.render(widget, {
+                                sitekey: data.siteKey,
+                                callback: onTurnstileSuccess
+                            });
+                        }
+                    } else {
+                        console.warn('Turnstile site key no configurada');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al cargar configuración de Turnstile:', error);
+                });
+        })();
+    </script>
+</body>
+</html>

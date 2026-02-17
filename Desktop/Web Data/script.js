@@ -73,8 +73,9 @@ if (contactForm) {
             // Get form data
             const formData = new FormData(contactForm);
             
-            // Send form data to PHP script
-            fetch('/send-email.php', {
+            // Send form data to PHP script (usar ruta relativa para compatibilidad local)
+            const scriptPath = contactForm.getAttribute('action') || 'send-email.php';
+            fetch(scriptPath, {
                 method: 'POST',
                 body: formData
             })
