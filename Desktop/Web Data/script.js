@@ -208,8 +208,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // Replace '549XXXXXXXXX' with your actual WhatsApp number in format: 549XXXXXXXXX (country code + area code + number)
 document.addEventListener('DOMContentLoaded', () => {
     const whatsappLinks = document.querySelectorAll('a[href*="wa.me"]');
-    const whatsappNumber = '5491121582109'; // Replace with your actual number
-    const initialMessage = 'Hola quiero consultar por un servicio...';
+    const whatsappNumber = '5491121582109';
+    const initialMessage = 'Hola, quiero consultar por un servicio...';
     const encodedMessage = encodeURIComponent(initialMessage);
     
     whatsappLinks.forEach(link => {
