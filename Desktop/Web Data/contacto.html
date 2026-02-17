@@ -130,8 +130,7 @@
                             <textarea id="message" name="message" rows="5" required placeholder="Contanos sobre tu proyecto..."></textarea>
                         </div>
                         <!-- Cloudflare Turnstile -->
-                        <!-- IMPORTANTE: Reemplazar TURNSTILE_SITE_KEY_PLACEHOLDER con tu clave real desde .env -->
-                        <div class="cf-turnstile" id="turnstile-widget" data-callback="onTurnstileSuccess"></div>
+                        <div class="cf-turnstile" id="turnstile-widget" data-sitekey="" data-callback="onTurnstileSuccess"></div>
                         <input type="hidden" name="cf-turnstile-response" id="cf-turnstile-response">
                         <button type="submit" class="btn btn-primary btn-block">Enviar mensaje</button>
                         <p class="form-note">* Campos obligatorios</p>
@@ -189,23 +188,34 @@
     <script src="/script.js" defer></script>
     <!-- Cargar clave de Turnstile desde configuración -->
     <script>
-        // Cargar clave desde endpoint PHP o usar placeholder
+        // Cargar clave desde endpoint PHP
         (function() {
-            fetch('/get-turnstile-config.php')
-                .then(response => response.json())
+            const widget = document.getElementById('turnstile-widget');
+            if (!widget) return;
+            
+            fetch('get-turnstile-config.php')
+                .then(response => {
+                    if (!response.ok) throw new Error('Error al cargar configuración');
+                    return response.json();
+                })
                 .then(data => {
-                    if (data.siteKey && data.siteKey !== 'TURNSTILE_SITE_KEY_PLACEHOLDER') {
-                        const widget = document.getElementById('turnstile-widget');
-                        if (widget) {
-                            widget.setAttribute('data-sitekey', data.siteKey);
+                    if (data.siteKey && data.siteKey !== '') {
+                        widget.setAttribute('data-sitekey', data.siteKey);
+                        // Si Turnstile ya está cargado, renderizar el widget
+                        if (typeof turnstile !== 'undefined') {
+                            turnstile.render(widget, {
+                                sitekey: data.siteKey,
+                                callback: onTurnstileSuccess
+                            });
                         }
                     } else {
-                        console.warn('Turnstile site key no configurada. Configura .env con TURNSTILE_SITE_KEY');
+                        console.error('Turnstile site key no configurada');
+                        widget.innerHTML = '<p style="color: red;">Error: Turnstile no configurado. Configura .env con TURNSTILE_SITE_KEY</p>';
                     }
                 })
                 .catch(error => {
                     console.error('Error al cargar configuración de Turnstile:', error);
-                    console.warn('Asegúrate de configurar TURNSTILE_SITE_KEY en .env');
+                    widget.innerHTML = '<p style="color: red;">Error al cargar Turnstile. Verifica la configuración.</p>';
                 });
         })();
     </script>

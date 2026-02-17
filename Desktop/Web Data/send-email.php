@@ -66,11 +66,13 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 // Verificar Cloudflare Turnstile
 $turnstile_secret = getenv('TURNSTILE_SECRET_KEY') ?: '';
 if (empty($turnstile_secret)) {
+    // Log del error para debugging (solo en desarrollo)
+    error_log('Turnstile: Secret key no configurada. Verifica el archivo .env');
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Error de configuración del servidor.']);
+    echo json_encode(['success' => false, 'message' => 'Error de configuración del servidor. Por favor contacta al administrador.']);
     exit;
 }
-$turnstile_token = isset($_POST['cf-turnstile-response']) ? $_POST['cf-turnstile-response'] : '';
+$turnstile_token = isset($_POST['cf-turnstile-response']) ? trim($_POST['cf-turnstile-response']) : '';
 
 if (empty($turnstile_token)) {
     http_response_code(400);
@@ -98,6 +100,7 @@ $turnstile_context = stream_context_create($turnstile_options);
 $turnstile_result = @file_get_contents($turnstile_url, false, $turnstile_context);
 
 if ($turnstile_result === false) {
+    error_log('Turnstile: Error al conectar con la API de Cloudflare');
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Error al verificar la seguridad. Por favor intentá nuevamente.']);
     exit;
@@ -106,6 +109,8 @@ if ($turnstile_result === false) {
 $turnstile_response = json_decode($turnstile_result, true);
 
 if (!$turnstile_response || !isset($turnstile_response['success']) || !$turnstile_response['success']) {
+    $error_codes = isset($turnstile_response['error-codes']) ? implode(', ', $turnstile_response['error-codes']) : 'desconocido';
+    error_log('Turnstile: Verificación fallida. Códigos de error: ' . $error_codes);
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Verificación de seguridad fallida. Por favor intentá nuevamente.']);
     exit;
